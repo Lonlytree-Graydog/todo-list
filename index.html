@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>待办事项</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="container">
+  <header class="header">
+    <h1>📋 待办事项 <button id="helpToggle" class="btn-icon btn-help-inline" title="帮助">❓</button></h1>
+    <div class="header-actions">
+      <a href="calendar.html" class="cal-link" title="日历视图">📅</a>
+      <button id="themeToggle" class="btn-icon" title="左键切换主题，右键切换背景">🌙</button>
+    </div>
+  </header>
+
+  <div class="search-bar">
+    <input type="text" id="searchInput" placeholder="🔍 搜索任务..." autocomplete="off">
+    <kbd class="shortcut-hint">Ctrl+K</kbd>
+  </div>
+
+  <div class="folder-bar">
+    <button class="folder-tab active" data-folder="__all__">📋 全部</button>
+    <button class="folder-tab" data-folder="__none__">📁 未分类</button>
+    <button class="folder-tab" data-folder="__recurring__">🔄 每日任务</button>
+    <div id="folderList" class="folder-list"></div>
+    <button id="addFolderBtn" class="folder-add-btn" title="新建文件夹">＋</button>
+  </div>
+
+  <div id="folderInputRow" class="folder-input-row" hidden>
+    <input type="text" id="folderNameInput" placeholder="文件夹名称..." maxlength="20" autocomplete="off">
+    <button id="folderInputConfirm" class="btn-primary btn-sm">确认</button>
+    <button id="folderInputCancel" class="btn-secondary btn-sm">取消</button>
+  </div>
+
+  <form id="addForm" class="add-form">
+    <div class="add-form-main">
+      <input type="text" id="titleInput" placeholder="输入新任务标题..." autocomplete="off" required>
+      <div class="priority-select-wrapper">
+        <select id="prioritySelect" class="priority-select">
+          <option value="low">🟢 低</option>
+          <option value="medium" selected>🟡 中</option>
+          <option value="high">🔴 高</option>
+        </select>
+      </div>
+    </div>
+    <div class="add-form-extra collapsed">
+      <div class="add-form-extras-row">
+        <input type="date" id="dueDateInput" class="due-date-input">
+        <select id="categorySelect" class="category-select">
+          <option value="">📂 分类</option>
+          <option value="work">💼 工作</option>
+          <option value="study">📚 学习</option>
+          <option value="life">🏠 生活</option>
+          <option value="other">📌 其他</option>
+        </select>
+        <select id="folderSelect" class="category-select">
+          <option value="">📁 文件夹</option>
+        </select>
+        <div class="duration-input-wrapper">
+          <input type="number" id="durationInput" class="duration-input" placeholder="时长" min="1" max="1440" step="1">
+          <span class="duration-unit">分钟</span>
+        </div>
+      </div>
+      <textarea id="descInput" placeholder="添加描述（可选）..." rows="2"></textarea>
+      <div class="add-form-recurring">
+        <label class="recurring-toggle">
+          <input type="checkbox" id="recurringCheck">
+          <span>重复任务</span>
+        </label>
+        <div class="recurring-options">
+          <div class="repeat-type-group">
+            <label class="repeat-radio"><input type="radio" name="repeatType" value="daily" checked><span>每天</span></label>
+            <label class="repeat-radio"><input type="radio" name="repeatType" value="weekday"><span>工作日</span></label>
+            <label class="repeat-radio"><input type="radio" name="repeatType" value="weekend"><span>休息日</span></label>
+            <label class="repeat-radio"><input type="radio" name="repeatType" value="weekly"><span>每周指定日</span></label>
+          </div>
+          <div class="weekday-picker" hidden>
+            <label class="weekday-chip"><input type="checkbox" data-wd="1"><span>一</span></label>
+            <label class="weekday-chip"><input type="checkbox" data-wd="2"><span>二</span></label>
+            <label class="weekday-chip"><input type="checkbox" data-wd="3"><span>三</span></label>
+            <label class="weekday-chip"><input type="checkbox" data-wd="4"><span>四</span></label>
+            <label class="weekday-chip"><input type="checkbox" data-wd="5"><span>五</span></label>
+            <label class="weekday-chip"><input type="checkbox" data-wd="6"><span>六</span></label>
+            <label class="weekday-chip"><input type="checkbox" data-wd="0"><span>日</span></label>
+          </div>
+          <div class="recurring-dates">
+            <input type="date" id="recurringStart">
+            <span class="recurring-sep">至</span>
+            <input type="date" id="recurringEnd">
+          </div>
+        </div>
+      </div>
+      <div class="add-form-tracking">
+        <label class="tracking-toggle">
+          <input type="checkbox" id="trackingCheck">
+          <span>追踪（未完成则每日前移）</span>
+        </label>
+      </div>
+    </div>
+    <div class="add-form-footer">
+      <button type="button" id="toggleExtraBtn" class="btn-link">展开更多</button>
+      <button type="submit" class="btn-primary">添加任务</button>
+    </div>
+  </form>
+
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <div class="filter-group">
+        <button class="filter-btn active" data-filter="all">全部</button>
+        <button class="filter-btn" data-filter="active">进行中</button>
+        <button class="filter-btn" data-filter="completed">已完成</button>
+      </div>
+      <span class="toolbar-divider"></span>
+      <span class="stat-inline">📝 <strong id="statTotal">0</strong> 项</span>
+      <span class="stat-inline">▸ <strong id="statActive">0</strong> 进行中</span>
+      <span class="stat-inline">✓ <strong id="statDone">0</strong> 已完成</span>
+      <span class="stat-inline">🔍 <strong id="statTracking">0</strong> 追踪中</span>
+    </div>
+    <div class="toolbar-right">
+      <select id="sortSelect" class="sort-select">
+        <option value="created-desc" selected>创建时间 ↓</option>
+        <option value="created-asc">创建时间 ↑</option>
+        <option value="dueDate-asc">截止日期 ↑</option>
+        <option value="dueDate-desc">截止日期 ↓</option>
+        <option value="priority-desc">优先级 ↓</option>
+        <option value="priority-asc">优先级 ↑</option>
+        <option value="manual">📌 手动排序</option>
+      </select>
+      <button id="dateGroupToggle" class="btn-icon-tool" title="按日期分组">📅</button>
+      <button id="compactDoneBtn" class="btn-icon-tool" title="紧凑已完成">✓</button>
+      <button id="clearCompletedBtn" class="btn-icon-tool btn-icon-danger" title="清除已完成">🗑</button>
+    </div>
+  </div>
+
+  <div id="taskList" class="task-list"></div>
+
+  <div id="emptyState" class="empty-state">
+    <div class="empty-icon">📝</div>
+    <p>暂无任务，添加一个吧！</p>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-actions">
+      <button id="exportBtn" class="btn-secondary">📤 导出</button>
+      <button id="importBtn" class="btn-secondary">📥 导入</button>
+      <input type="file" id="importFile" accept=".json" hidden>
+    </div>
+    <p class="footer-info">拖拽任务可排序 · 数据存储在本地</p>
+  </footer>
+</div>
+
+<div id="toast" class="toast"></div>
+<div id="contextMenu" class="context-menu" hidden>
+  <div class="context-menu-section" data-section="folder">
+    <button data-action="rename-folder">✏️ 重命名</button>
+    <button data-action="delete-folder">🗑 删除文件夹</button>
+  </div>
+  <div class="context-menu-section" data-section="task">
+    <div class="context-menu-label">移动到文件夹</div>
+    <div id="moveFolderList" class="context-submenu"></div>
+    <div class="context-menu-separator"></div>
+    <div class="context-menu-label">成为子任务</div>
+    <div id="moveAsSubtaskList" class="context-submenu"></div>
+    <button data-action="delete-task">🗑 删除任务</button>
+  </div>
+</div>
+<div id="confirmDialog" class="confirm-overlay" hidden>
+  <div class="confirm-box">
+    <p id="confirmMsg"></p>
+    <div class="confirm-actions">
+      <button id="confirmYes" class="btn-primary">确认</button>
+      <button id="confirmNo" class="btn-secondary">取消</button>
+    </div>
+  </div>
+</div>
+
+<div id="helpOverlay" class="help-overlay hidden">
+  <div class="help-panel">
+    <div class="help-header">
+      <h2>📖 使用帮助</h2>
+      <button id="helpClose" class="btn-icon" title="关闭">✕</button>
+    </div>
+    <nav class="help-nav" id="helpNav">
+      <button class="help-nav-btn active" data-page="0">⌨️ 快捷键</button>
+      <button class="help-nav-btn" data-page="1">📋 任务</button>
+      <button class="help-nav-btn" data-page="2">📁 文件夹</button>
+      <button class="help-nav-btn" data-page="3">📊 拓展功能</button>
+      <button class="help-nav-btn" data-page="4">📅 排序</button>
+      <button class="help-nav-btn" data-page="5">💾 数据</button>
+      <button class="help-nav-btn" data-page="6">🎨 其他</button>
+    </nav>
+    <div class="help-body">
+
+      <!-- Page 0: 快捷键 -->
+      <div class="help-page active" data-page="0">
+        <div class="help-section">
+          <h3>⌨️ 快捷键一览</h3>
+          <div class="help-shortcuts">
+            <div><kbd>Ctrl + Shift + H</kbd> <span>打开/关闭帮助弹窗</span></div>
+            <div><kbd>Ctrl + K</kbd> <span>聚焦搜索框</span></div>
+            <div><kbd>Ctrl + 1/2/3</kbd> <span>筛选：全部 / 进行中 / 已完成</span></div>
+            <div><kbd>Ctrl + Shift + G</kbd> <span>切换日期分组</span></div>
+            <div><kbd>Ctrl + Shift + M</kbd> <span>展开/收起添加表单</span></div>
+            <div><kbd>Ctrl + Shift + C</kbd> <span>切换紧凑已完成</span></div>
+            <div><kbd>Ctrl + Shift + Del</kbd> <span>清除已完成任务</span></div>
+            <div><kbd>Ctrl + B</kbd> <span>切换背景图片</span></div>
+            <div><kbd>Ctrl + Alt + T</kbd> <span>切换亮色/暗色主题</span></div>
+            <div><kbd>N</kbd> <span>聚焦任务输入框</span></div>
+            <div><kbd>Enter</kbd> <span>提交表单 / 保存编辑</span></div>
+            <div><kbd>Esc</kbd> <span>取消编辑 / 清除搜索 / 取消拖拽 / 关闭弹窗</span></div>
+            <div><kbd>双击任务</kbd> <span>进入编辑模式</span></div>
+          </div>
+        </div>
+        <div class="help-section">
+          <h3>🖐️ 表单键盘操作</h3>
+          <ul>
+            <li><strong>Tab：</strong>在表单字段间前进，折叠状态下的隐藏字段自动跳过。</li>
+            <li><strong>Shift + Tab：</strong>在表单字段间后退。</li>
+            <li><strong>方向键：</strong>在下拉框、日期选择器中切换选项。</li>
+            <li><strong>空格：</strong>勾选/取消复选框，打开下拉框。</li>
+            <li><strong>Enter：</strong>提交表单、确认下拉选项。</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Page 1: 任务管理 -->
+      <div class="help-page" data-page="1">
+        <div class="help-section">
+          <h3>📋 添加任务</h3>
+          <ul>
+            <li>在顶部输入框填写标题，选择<strong>优先级</strong>（🔴高/🟡中/🟢低），点击"添加任务"或按 Enter。</li>
+            <li>点击<strong>"展开更多"</strong>可设置：截止日期、分类（工作/学习/生活/其他）、所属文件夹、预计时长（分钟）。</li>
+            <li>截止日期支持中文格式显示（如 6月18日），过期自动标红。</li>
+          </ul>
+        </div>
+        <div class="help-section">
+          <h3>✏️ 编辑与操作</h3>
+          <ul>
+            <li><strong>完成：</strong>点击任务左侧方框打勾，已完成任务显示删除线。</li>
+            <li><strong>编辑：</strong>点击 ✏️ 按钮或双击任务，修改后保存。</li>
+            <li><strong>删除：</strong>点击 🗑 按钮，或右键任务选择删除。</li>
+            <li><strong>多字段：</strong>编辑时可修改标题、描述、优先级、截止日期、分类、文件夹、时长。</li>
+          </ul>
+        </div>
+        <div class="help-section">
+          <h3>🔍 筛选与搜索</h3>
+          <ul>
+            <li><strong>状态筛选：</strong>工具栏切换"全部/进行中/已完成"。</li>
+            <li><strong>搜索：</strong>按标题和描述进行模糊匹配，支持中文。</li>
+            <li><strong>紧凑已完成：</strong>点击 ✓ 按钮切换紧凑模式，已完成任务缩略显示为单行。</li>
+          </ul>
+        </div>
+        <div class="help-section">
+          <h3>📋 子任务</h3>
+          <ul>
+            <li>任务卡片中展开<strong>▸ 子任务</strong>，可为任务创建子步骤。</li>
+            <li>每个子任务有独立<strong>标题、时长</strong>和完成状态，继承父任务的优先级和截止日期。</li>
+            <li>子任务<strong>总时长</strong>不得超过父任务总时长。</li>
+            <li><strong>右键任务 → 成为子任务</strong>：将任务转为另一个任务的子任务，按时间分组显示可选父任务。</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Page 2: 文件夹 -->
+      <div class="help-page" data-page="2">
+        <div class="help-section">
+          <h3>📁 文件夹管理</h3>
+          <ul>
+            <li><strong>创建：</strong>点击文件夹栏右侧的 ＋ 按钮，输入名称（最多20字）确认。</li>
+            <li><strong>切换：</strong>点击文件夹标签查看该文件夹内的任务。</li>
+            <li><strong>重命名：</strong>右键文件夹标签 → 重命名。</li>
+            <li><strong>删除：</strong>右键文件夹标签 → 删除。文件夹内任务不会丢失，自动归为"未分类"。</li>
+          </ul>
+        </div>
+        <div class="help-section">
+          <h3>📌 任务归属</h3>
+          <ul>
+            <li>添加或编辑任务时，可选择所属文件夹和分类标签。</li>
+            <li><strong>移动任务：</strong>右键任务 → 移动到文件夹 → 选择目标文件夹。</li>
+            <li>分类标签（工作/学习/生活/其他）和文件夹是独立维度，可叠加筛选。</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Page 3: 拓展功能 -->
+      <div class="help-page" data-page="3">
+        <div class="help-section">
+          <h3>🔄 重复任务</h3>
+          <ul>
+            <li>勾选<strong>"重复任务"</strong>，设置开始和结束日期，选择重复模式：<strong>每天/工作日/休息日/每周指定日</strong>。</li>
+            <li>每天首次打开页面时，自动为当天日期创建一个独立任务实例（符合重复条件时）。</li>
+            <li>若设定了<strong>总时长</strong>，每个推送实例自动按<strong>总时长 / 周期天数</strong>均分。</li>
+          </ul>
+        </div>
+        <div class="help-section">
+          <h3>📊 规则管理</h3>
+          <ul>
+            <li>点击文件夹栏<strong>"🔄 每日任务"</strong>标签查看所有规则，含进度条和状态。</li>
+            <li><strong>✏️ 修改：</strong>编辑规则标题、优先级、分类、日期范围、重复模式。</li>
+            <li><strong>🔄 重推：</strong>若误删今日任务实例，可手动重新推送。</li>
+            <li><strong>⠿ 拖拽：</strong>按住 ⠿ 可拖拽排序规则列表，顺序自动保存。</li>
+            <li><strong>🗑 删除规则</strong>不影响已生成的普通任务实例。</li>
+          </ul>
+        </div>
+        <div class="help-section">
+          <h3>🔍 追踪任务</h3>
+          <ul>
+            <li>添加任务时勾选<strong>"追踪"</strong>，必须设置<strong>截止日期</strong>。与每日重复互斥。</li>
+            <li>截止日期未完成任务，次日自动删除旧实例、生成当天新任务，始终<strong>只保留一条</strong>。</li>
+            <li>标记<strong>完成</strong>后追踪自动停用；<strong>删除</strong>任务时追踪规则同步移除。</li>
+            <li>任务卡片显示<strong>🔍 追踪中</strong>标签，工具栏统计区显示<strong>🔍 N 追踪中</strong>。</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Page 4: 排序与分组 -->
+      <div class="help-page" data-page="4">
+        <div class="help-section">
+          <h3>📊 排序方式</h3>
+          <ul>
+            <li>工具栏排序下拉框支持：创建时间 ↓↑、截止日期 ↓↑、优先级 ↓↑、手动排序。</li>
+            <li><strong>手动排序：</strong>在任务区域按住鼠标拖拽即可调整顺序，拖拽后自动切换到手动排序模式。</li>
+            <li>排序方式会保存在浏览器中，下次打开自动恢复。</li>
+          </ul>
+        </div>
+        <div class="help-section">
+          <h3>📅 日期分组</h3>
+          <ul>
+            <li>点击工具栏 <strong>📅 分组</strong> 按钮开启/关闭日期分组视图。</li>
+            <li>自动按截止日期归类为：已过期 / 今天 / 明天 / 本周 / 下周 / 更远 / 无截止日期。</li>
+            <li>分组标题旁显示具体日期范围，支持<strong>点击折叠/展开</strong>该组。</li>
+            <li>分组模式下每个组内<strong>支持拖拽排序</strong>。</li>
+            <li>可与文件夹筛选、状态筛选、搜索叠加使用。</li>
+          </ul>
+        </div>
+        <div class="help-section">
+          <h3>🖱️ 拖拽排序细节</h3>
+          <ul>
+            <li>在任务卡片区域按住鼠标左键拖拽，松开即可完成排序。</li>
+            <li>拖拽过程中会显示半透明跟随卡片和目标插入位置指示。</li>
+            <li>按 <kbd>Esc</kbd> 可取消正在进行的拖拽操作。</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Page 5: 数据管理 -->
+      <div class="help-page" data-page="5">
+        <div class="help-section">
+          <h3>💾 导入 / 导出</h3>
+          <ul>
+            <li><strong>导出：</strong>点击底部"导出"按钮，将所有任务、文件夹、每日任务规则保存为 JSON 文件。</li>
+            <li><strong>导入：</strong>点击"导入"按钮，选择之前导出的 JSON 文件，恢复所有数据。</li>
+            <li>导入会<strong>覆盖</strong>当前所有数据，请谨慎操作。</li>
+          </ul>
+        </div>
+        <div class="help-section">
+          <h3>🔒 数据安全</h3>
+          <ul>
+            <li>所有数据保存在浏览器的 <strong>localStorage</strong> 中，关闭页面不会丢失。</li>
+            <li>数据不会上传到任何服务器，仅供本地使用。</li>
+            <li>清除浏览器缓存或使用隐私模式可能会丢失数据，建议定期导出备份。</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Page 6: 其他 -->
+      <div class="help-page" data-page="6">
+        <div class="help-section">
+          <h3>🎨 主题切换</h3>
+          <ul>
+            <li><strong>左键点击</strong>标题栏的 <strong>🌙/☀️</strong> 按钮或按 <kbd>Ctrl + Alt + T</kbd> 切换亮色/暗色模式。</li>
+            <li>主题偏好会自动保存在本地，下次打开自动恢复。</li>
+          </ul>
+        </div>
+        <div class="help-section">
+          <h3>🖼️ 背景切换</h3>
+          <ul>
+            <li><strong>右键点击</strong>标题栏的 <strong>🌙/☀️</strong> 按钮或按 <kbd>Ctrl + B</kbd> 可依次切换 6 张背景图片。</li>
+            <li>切换偏好会自动保存，下次打开保持上次选择的背景。</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

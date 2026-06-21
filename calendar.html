@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>任务日历</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="calendar.css">
+</head>
+<body>
+<div class="cal-container">
+  <header class="cal-header">
+    <div class="cal-nav">
+      <button id="calPrev" class="cal-nav-btn" title="上月">◀</button>
+      <h1 id="calTitle">2026年 6月</h1>
+      <button id="calNext" class="cal-nav-btn" title="下月">▶</button>
+      <button id="calToday" class="cal-today-btn">今天</button>
+    </div>
+    <div class="cal-header-actions">
+      <a href="index.html" class="cal-link" title="返回待办事项">📋 待办</a>
+      <button id="themeToggle" class="btn-icon" title="切换主题">🌙</button>
+    </div>
+  </header>
+
+  <div class="cal-weekdays">
+    <div class="cal-weekday">一</div>
+    <div class="cal-weekday">二</div>
+    <div class="cal-weekday">三</div>
+    <div class="cal-weekday">四</div>
+    <div class="cal-weekday">五</div>
+    <div class="cal-weekday cal-weekend">六</div>
+    <div class="cal-weekday cal-weekend">日</div>
+  </div>
+
+  <div id="calGrid" class="cal-grid"></div>
+
+  <div id="calDetail" class="cal-detail hidden">
+    <div class="cal-detail-header">
+      <h2 id="calDetailDate"></h2>
+      <button id="calDetailClose" class="cal-detail-close">✕</button>
+    </div>
+    <div id="calDetailTasks" class="cal-detail-tasks"></div>
+  </div>
+</div>
+
+<script src="calendar.js"></script>
+</body>
+</html>
